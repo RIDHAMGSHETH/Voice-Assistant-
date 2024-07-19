@@ -1,95 +1,86 @@
+#project sunday
 import speech_recognition as sr
-import pyttsx3
-import pywhatkit
 import datetime
-import wolframalpha
+import wikipedia
+import pyttsx3
+import webbrowser
+import random
+import os
+import pywhatkit
 
-# Initialize WolframAlpha client
-try:
-    app = wolframalpha.Client("TVR5EP-PY6UTR7EGU")
-except Exception:
-    print("Your internet connection is off or the API key is incorrect.")
-    app = None
 
-# Initialize recognizer and text-to-speech engine
-recognizer = sr.Recognizer()
-engine = pyttsx3.init()
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
+#text to speech
 
-def talk(text):
-    """Speaks the given text."""
-    engine.say(text)
+engine = pyttsx3.init('sapi5')
+voice =  engine.getProperty('voices')
+#print(voice)
+engine .setProperty('voice', voice[1].id)
+
+def speak(audio): 
+    engine.say(audio)
     engine.runAndWait()
 
-def take_command():
-    """Listens for a command and returns it."""
-    command = ""
+def wish():
+    hour = int(datetime.datetime.now().hour)
+    if hour >- 0 and hour < 12:
+        speak("Good morning sir, how can i help you")
+    elif hour>-12 and hour<18 :
+        speak('Good afternoon sir, i am ready to help you')
+    else:
+        speak('Good night sir, working hard nice, how may i help you')
+
+
+def takecom():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listning...")
+        audio = r.listen(source)
     try:
-        with sr.Microphone() as source:
-            print("Adjusting for ambient noise...")
-            recognizer.adjust_for_ambient_noise(source)
-            print("Listening...")
-            audio = recognizer.listen(source)
-            print("Recognizing...")
-            command = recognizer.recognize_google(audio)
-            command = command.lower()
-            if 'sunday' in command:
-                command = command.replace('sunday', '')
-            print(f"Recognized command: {command}")
-    except sr.UnknownValueError:
-        print("Sorry, I did not understand that.")
-    except sr.RequestError:
-        print("Request error from Google Speech Recognition service.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    return command
+        print("Recognising...")
+        text = r.recognize_google(audio, language='en-in')
+        print(text)
+    except Exception:
+        speak("Sorry sir, i am not getting it")
+        print("Error")
+        return "none"
+    return text
 
-def run_sunday():
-    """Executes commands based on the user's input."""
-    command = take_command()
-    if command:
-        print(f"Command: {command}")
-        if 'youtube' in command:
-            song = command.replace('youtube', '').strip()
-            talk(f'Playing {song}')
-            pywhatkit.playonyt(song)
 
-        elif 'time' in command:
-            current_time = datetime.datetime.now().strftime('%I:%M %p')
-            print(current_time)
-            talk(f'Current time is {current_time}')
-        
-        elif 'hello' in command:
-            talk('Hey how can i help you?')
- 
-        elif 'hi' in command:
-            talk('Hey how can i help you?')
- 
-        elif 'who are you' in command:
-            talk('I am Sunday, Ridham made me for speech recognition and simple tasks.')
-        
-        elif 'hu r u' in command:
-            talk('I am Sunday, Ridham made me for speech recognition and simple tasks.')    
-
-        elif 'how can you help' in command:
-            talk('I am Sunday and i can do multiple tasks. I can tell time and temperature. I can perform tasks like playing songs on youtube')
-
-        elif 'temperature' in command:
-            if app:
-                try:
-                    res = app.query(command)
-                    result = next(res.results).text
-                    print(result)
-                    talk(result)
-                except Exception as e:
-                    print(f"An error occurred with WolframAlpha: {e}")
-                    talk("Sorry, I couldn't fetch the temperature.")
-            else:
-                talk("WolframAlpha client is not initialized.")
-        else:
-            talk("Sorry, I did not understand that command.")
-
+#main function
 if __name__ == "__main__":
-    run_sunday()
+    wish()
+    while True:
+        query = takecom().lower()
+
+        if 'wikipedia' in query:
+            speak('searching on wikipedia... just a moment')
+            query.replace("wikipedia", "")
+            results = wikipedia.summary(query,sentences=2)
+            print(results)
+            speak(results)
+        elif 'how can you help me' in query:
+            speak('you can ask me anything')
+        elif 'who are my family members':
+            speak('Your family members are your sister, mother, and father')
+        elif 'open youtube' in query or 'open video online' in query:
+            webbrowser.open("www.youtube.com")
+            speak('opening youtube')
+        elif 'open google' in query:
+            webbrowser.open("www.google.co.in")
+            speak('opening google')
+        elif 'goodbye' in query:
+            speak('Good bye sir')
+            exit()
+        elif "shutdown my pc" in query:
+            speak('Shutting down')
+            os.system('shutdown -s')
+        elif 'time' in query:
+            time = datetime.datetime.now().strftime('%I:%M %p')
+            speak('Current time is ' + time)
+        elif 'who are you' in query:
+            speak('I am sunday, Ridham made me to help his things done')
+        elif 'youtube' in query:
+            song = query.replace('play',  '')
+            speak('playing' + song)
+            pywhatkit.playonyt(song)
 
